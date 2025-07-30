@@ -3,7 +3,7 @@
 import re
 import unicodedata
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 _DIR = Path(__file__).parent
 ESPEAK_DATA_DIR = _DIR / "espeak-ng-data"
@@ -18,14 +18,14 @@ class EspeakPhonemizer:
 
         espeakbridge.initialize(str(espeak_data_dir))
 
-    def phonemize(self, voice: str, text: str) -> list[list[str]]:
+    def phonemize(self, voice: str, text: str) -> List[List[str]]:
         """Text to phonemes grouped by sentence."""
         from . import espeakbridge  # avoid circular import
 
         espeakbridge.set_voice(voice)
 
-        all_phonemes: list[list[str]] = []
-        sentence_phonemes: list[str] = []
+        all_phonemes: List[List[str]] = []
+        sentence_phonemes: List[str] = []
 
         clause_phonemes = espeakbridge.get_phonemes(text)
         for phonemes_str, terminator_str, end_of_sentence in clause_phonemes:

@@ -8,7 +8,7 @@ import unicodedata
 import wave
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import onnxruntime
@@ -112,7 +112,7 @@ class PiperVoice:
         with open(config_path, "r", encoding="utf-8") as config_file:
             config_dict = json.load(config_file)
 
-        providers: list[Union[str, tuple[str, dict[str, Any]]]]
+        providers: List[Union[str, Tuple[str, Dict[str, Any]]]]
         if use_cuda:
             providers = [
                 (
@@ -134,7 +134,7 @@ class PiperVoice:
             espeak_data_dir=Path(espeak_data_dir),
         )
 
-    def phonemize(self, text: str) -> list[list[str]]:
+    def phonemize(self, text: str) -> List[List[str]]:
         """
         Text to phonemes grouped by sentence.
 
@@ -150,7 +150,7 @@ class PiperVoice:
         if self.config.phoneme_type != PhonemeType.ESPEAK:
             raise ValueError(f"Unexpected phoneme type: {self.config.phoneme_type}")
 
-        phonemes: list[list[str]] = []
+        phonemes: List[List[str]] = []
         text_parts = _PHONEME_BLOCK_PATTERN.split(text)
         for i, text_part in enumerate(text_parts):
             if text_part.startswith("[["):
@@ -193,7 +193,7 @@ class PiperVoice:
 
         return phonemes
 
-    def phonemes_to_ids(self, phonemes: list[str]) -> list[int]:
+    def phonemes_to_ids(self, phonemes: List[str]) -> List[int]:
         """
         Phonemes to ids.
 
@@ -275,7 +275,7 @@ class PiperVoice:
             wav_file.writeframes(audio_chunk.audio_int16_bytes)
 
     def phoneme_ids_to_audio(
-        self, phoneme_ids: list[int], syn_config: Optional[SynthesisConfig] = None
+        self, phoneme_ids: List[int], syn_config: Optional[SynthesisConfig] = None
     ) -> np.ndarray:
         """
         Synthesize raw audio from phoneme ids.

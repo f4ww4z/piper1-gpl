@@ -7,7 +7,7 @@ Ported with the help of ChatGPT 2025-05-01.
 
 import json
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 from onnxruntime import InferenceSession
@@ -39,22 +39,22 @@ class TashkeelDiacritizer:
         with open(
             model_dir / "input_id_map.json", "r", encoding="utf-8"
         ) as input_id_map_file:
-            self.input_id_map: dict[str, int] = json.load(input_id_map_file)
+            self.input_id_map: Dict[str, int] = json.load(input_id_map_file)
 
         with open(
             model_dir / "target_id_map.json", "r", encoding="utf-8"
         ) as target_id_map_file:
-            target_id_map: dict[str, int] = json.load(target_id_map_file)
-            self.id_target_map: dict[int, str] = {
+            target_id_map: Dict[str, int] = json.load(target_id_map_file)
+            self.id_target_map: Dict[int, str] = {
                 i: c for c, i in target_id_map.items()
             }
 
-        self.target_id_meta_chars: set[int] = {target_id_map[c] for c in [PAD]}
+        self.target_id_meta_chars: Set[int] = {target_id_map[c] for c in [PAD]}
 
         with open(
             model_dir / "hint_id_map.json", "r", encoding="utf-8"
         ) as hint_id_map_file:
-            self.hint_id_map: dict[str, int] = json.load(hint_id_map_file)
+            self.hint_id_map: Dict[str, int] = json.load(hint_id_map_file)
 
     def __call__(self, text: str, taskeen_threshold: Optional[float] = None) -> str:
         """Add diacritics using libtashkeel."""
@@ -90,8 +90,8 @@ class TashkeelDiacritizer:
         )
 
     def _infer(
-        self, input_ids: list[int], diac_ids: list[int], seq_length: int
-    ) -> tuple[list[int], list[float]]:
+        self, input_ids: List[int], diac_ids: List[int], seq_length: int
+    ) -> Tuple[List[int], List[float]]:
         """Infer target ids and logits."""
         input_ids_arr = np.array(input_ids, dtype=np.int64).reshape(1, seq_length)
         diac_ids_arr = np.array(diac_ids, dtype=np.int64).reshape(1, seq_length)
@@ -113,9 +113,9 @@ class TashkeelDiacritizer:
         return target_ids, logits
 
     def _annotate_text_with_diacritics(
-        self, input_text: str, diacritics: list[str], removed_chars: set[str]
+        self, input_text: str, diacritics: List[str], removed_chars: Set[str]
     ) -> str:
-        output: list[str] = []
+        output: List[str] = []
         diac_iter = iter(diacritics)
         for c in input_text:
             if self._is_diacritic_char(c):
@@ -132,12 +132,12 @@ class TashkeelDiacritizer:
     def _annotate_text_with_diacritics_taskeen(
         self,
         input_text: str,
-        diacritics: list[str],
-        removed_chars: set[str],
-        logits: list[float],
+        diacritics: List[str],
+        removed_chars: Set[str],
+        logits: List[float],
         threshold: float,
     ) -> str:
-        output: list[str] = []
+        output: List[str] = []
         diac_iter = zip(diacritics, logits)
         for c in input_text:
             if self._is_diacritic_char(c):
@@ -159,7 +159,7 @@ class TashkeelDiacritizer:
 
     def _extract_chars_and_diacritics(
         self, text: str, normalize_diacritics: bool = True
-    ) -> tuple[str, list[str]]:
+    ) -> Tuple[str, List[str]]:
         text = text.lstrip("".join(ARABIC_DIACRITICS))
 
         clean_chars = []
@@ -186,9 +186,9 @@ class TashkeelDiacritizer:
 
         return "".join(clean_chars), diacritics
 
-    def _to_valid_chars(self, text: str) -> tuple[str, set[str]]:
-        valid: list[str] = []
-        invalid: set[str] = set()
+    def _to_valid_chars(self, text: str) -> Tuple[str, Set[str]]:
+        valid: List[str] = []
+        invalid: Set[str] = set()
         for c in text:
             if (c in self.input_id_map) or (c in ARABIC_DIACRITICS):
                 valid.append(c)
@@ -198,13 +198,13 @@ class TashkeelDiacritizer:
                 invalid.add(c)
         return "".join(valid), invalid
 
-    def _input_to_ids(self, text: str) -> list[int]:
+    def _input_to_ids(self, text: str) -> List[int]:
         return [self.input_id_map[c] for c in text]
 
-    def _hint_to_ids(self, diacritics: list[str]) -> list[int]:
+    def _hint_to_ids(self, diacritics: List[str]) -> List[int]:
         return [self.hint_id_map[d] for d in diacritics]
 
-    def _target_to_diacritics(self, target_ids: list[int]) -> list[str]:
+    def _target_to_diacritics(self, target_ids: List[int]) -> List[str]:
         return [
             self.id_target_map[i]
             for i in target_ids
