@@ -7,8 +7,8 @@ import sys
 import tempfile
 import time
 import wave
-from collections.abc import Iterable
 from pathlib import Path
+from typing import Iterable
 
 from . import PiperVoice, SynthesisConfig
 from .audio_playback import AudioPlayer
